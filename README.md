@@ -249,6 +249,91 @@ Compiles TypeScript with strict type checking and bundles production assets via 
 
 ---
 
+## ☁️ Google Cloud Run Deployment (Public Access Anywhere)
+
+GitRoast is packaged with a unified multi-stage `Dockerfile` that compiles the React 19 frontend and serves it directly alongside FastAPI in a single lightweight container. It requires zero configuration, has zero CORS friction, and auto-scales to 0 when idle.
+
+### Deployment Architecture
+- **Single HTTPS URL**: Google Cloud Run provisions a managed SSL domain (e.g., `https://gitroast-xxxx-uc.a.run.app`).
+- **Unified Endpoints**: Non-API traffic serves the high-performance React SPA (`/app/dist`), while `/api/*` endpoints handle real-time GitHub fetching and Gemini AI analysis.
+- **Cross-Device Ready**: Accessible on smartphones, tablets, laptops, and smart displays worldwide without requiring authentication (`--allow-unauthenticated`).
+
+---
+
+### Option 1: Instant 1-Command Deploy via Google Cloud Shell (Recommended)
+
+Google Cloud Shell is a free, in-browser machine pre-installed with `gcloud`, `docker`, and authenticated credentials.
+
+1. Open [Google Cloud Shell](https://shell.cloud.google.com).
+2. Clone your repository:
+   ```bash
+   git clone https://github.com/Debashreeta262/GitRoast.git
+   cd GitRoast
+   ```
+3. Deploy directly to Cloud Run:
+   ```bash
+   gcloud run deploy gitroast \
+     --source . \
+     --region us-central1 \
+     --allow-unauthenticated \
+     --port 8080 \
+     --set-env-vars ENABLE_OFFLINE_AI_FALLBACK=True
+   ```
+4. Cloud Run will output your live URL:
+   ```
+   Service [gitroast] revision [gitroast-00001] has been deployed and is serving 100 percent of traffic.
+   Service URL: https://gitroast-xxxxx-uc.a.run.app
+   ```
+5. *(Optional)* Add your Gemini API key and GitHub Token:
+   ```bash
+   gcloud run services update gitroast \
+     --region us-central1 \
+     --update-env-vars GEMINI_API_KEY=your_key_here,GITHUB_TOKEN=your_token_here
+   ```
+
+---
+
+### Option 2: Continuous Deployment via Google Cloud Console
+
+1. Go to the [Google Cloud Console: Cloud Run](https://console.cloud.google.com/run).
+2. Click **Create Service**.
+3. Select **"Continuously deploy from a repository"** and click **Set up with Cloud Build**.
+4. Select **GitHub** as the provider, authenticate, and pick `Debashreeta262/GitRoast`.
+5. Select branch `ui-redesign` (or `main`) and Build Type: **Dockerfile** (Source location: `/Dockerfile`).
+6. Under **Authentication**, select **"Allow unauthenticated invocations"** (so anyone on any device can access it).
+7. Under **Container, Variables & Secrets**, optionally add:
+   - `GEMINI_API_KEY`: your Gemini API key
+   - `GITHUB_TOKEN`: optional personal access token
+   - `ENABLE_OFFLINE_AI_FALLBACK`: `True`
+8. Click **Create**. Every new push to your branch will automatically build and deploy.
+
+---
+
+### Option 3: Local CLI Deployment (Windows / Mac / Linux)
+
+If you have Google Cloud SDK installed locally:
+
+```bash
+# Log in to your Google Cloud account
+gcloud auth login
+
+# Set your active Google Cloud Project
+gcloud config set project YOUR_PROJECT_ID
+
+# Deploy directly from current directory
+gcloud run deploy gitroast \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8080
+```
+On Windows, you can also simply run:
+```cmd
+.\deploy-cloudrun.bat
+```
+
+---
+
 ## 🎬 Suggested Demo Profiles to Test
 
 | Profile | Target Role | Recommended Tone | What to Look For |

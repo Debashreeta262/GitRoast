@@ -85,5 +85,20 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
+import os
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
 app.include_router(health.router)
 app.include_router(analyze.router)
+
+# Mount static frontend files if dist exists (unified production deployment)
+DIST_DIR = Path(os.environ.get("DIST_DIR", Path(__file__).resolve().parent.parent / "dist"))
+if not DIST_DIR.exists():
+    DIST_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if DIST_DIR.exists():
+    logger.info(f"Mounting frontend dist from: {DIST_DIR}")
+    app.mount("/", StaticFiles(directory=str(DIST_DIR), html=True), name="static")
+else:
+    logger.info(f"Frontend dist not found at {DIST_DIR}; running in API-only mode.")

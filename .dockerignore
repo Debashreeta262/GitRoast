@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+node_modules
+*/node_modules
+frontend/dist
+.vscode
+.idea
+venv
+.venv
+backend/tests
+backend/verify_multi_user.py
+backend/.pytest_cache
