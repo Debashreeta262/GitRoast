@@ -1,11 +1,15 @@
 import React from 'react';
 import {
+  AlertTriangle,
+  ArrowRight,
   Briefcase,
   CheckCircle2,
   Compass,
-  XCircle,
-  Zap,
+  Sparkles,
 } from 'lucide-react';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { SectionHeader } from './ui/SectionHeader';
 
 interface RecruiterVerdictCardProps {
   verdict: string;
@@ -26,131 +30,147 @@ export const RecruiterVerdictCard: React.FC<RecruiterVerdictCardProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      {/* 30-Second Recruiter Impression */}
-      <div className="bg-surface rounded-2xl p-6 sm:p-7 border border-surface-border shadow-xl">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
-            <Briefcase className="w-4 h-4" />
-          </div>
-          <h3 className="text-base font-bold text-white">30-Second Recruiter Impression</h3>
-        </div>
-        <p className="text-base sm:text-lg text-gray-200 leading-relaxed font-sans">{verdict}</p>
+      {/* 30-Second Recruiter Impression Hero */}
+      <Card variant="default" padding="lg">
+        <SectionHeader
+          icon={<Briefcase className="w-4 h-4 text-accent-light" />}
+          title="Recruiter in 30 Seconds"
+          subtitle="Simulated first-impression from a senior engineering hiring manager"
+          badge={
+            <Badge variant="accent" size="sm">
+              Executive Evaluation
+            </Badge>
+          }
+        />
+
+        <p className="text-base sm:text-lg text-text-primary leading-relaxed font-sans mt-2">
+          {verdict}
+        </p>
+
         {roleFitSummary && (
-          <p className="mt-3 text-xs sm:text-sm text-gray-400 border-t border-surface-border/60 pt-3 flex items-center gap-2">
-            <span className="font-mono text-primary font-semibold text-xs uppercase tracking-wider">
-              Role Match:
+          <div className="mt-4 pt-3.5 border-t border-border/60 flex flex-wrap items-center gap-2 text-xs text-text-secondary font-mono">
+            <span className="font-bold text-accent-light uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5" /> Role Match:
             </span>
-            {roleFitSummary}
-          </p>
-        )}
-      </div>
-
-      {/* Strengths & Weaknesses Grid (Exactly 3 each) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Strengths */}
-        <div className="bg-surface rounded-2xl p-6 border border-emerald-950/40 shadow-xl relative overflow-hidden">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              Key Strengths (3)
-            </h4>
+            <span className="text-text-primary">{roleFitSummary}</span>
           </div>
+        )}
+      </Card>
 
-          <ul className="space-y-3">
+      {/* Strengths & Weaknesses (Exactly 3 each) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Strengths (✓) */}
+        <Card variant="default" padding="lg" className="border-score-success/30 bg-surface">
+          <SectionHeader
+            icon={<CheckCircle2 className="w-4 h-4 text-score-success" />}
+            title="Key Strengths"
+            subtitle="Observable signals that build hiring confidence"
+            badge={
+              <Badge variant="success" size="sm">
+                3 Verified
+              </Badge>
+            }
+          />
+
+          <ul className="space-y-3 mt-3">
             {strengths.slice(0, 3).map((s, idx) => (
               <li
                 key={idx}
-                className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-300 bg-surface-card/60 rounded-xl p-3 border border-surface-border/60"
+                className="flex items-start gap-2.5 text-xs sm:text-sm text-text-secondary bg-surface-elevated/70 rounded-lg p-3 border border-border/80"
               >
-                <span className="text-emerald-400 font-mono font-bold text-xs mt-0.5">
-                  #{idx + 1}
+                <span className="text-score-success font-bold font-mono text-sm leading-none mt-0.5">
+                  ✓
                 </span>
-                <span>{s}</span>
+                <span className="leading-snug text-text-primary">{s}</span>
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
 
-        {/* Weaknesses */}
-        <div className="bg-surface rounded-2xl p-6 border border-rose-950/40 shadow-xl relative overflow-hidden">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-md bg-rose-500/10 text-rose-400 flex items-center justify-center">
-              <XCircle className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              Identified Deficits (3)
-            </h4>
-          </div>
+        {/* Weaknesses (⚠) */}
+        <Card variant="default" padding="lg" className="border-score-danger/30 bg-surface">
+          <SectionHeader
+            icon={<AlertTriangle className="w-4 h-4 text-score-danger" />}
+            title="Identified Deficits"
+            subtitle="Patterns that introduce friction or hesitation"
+            badge={
+              <Badge variant="danger" size="sm">
+                3 Flags
+              </Badge>
+            }
+          />
 
-          <ul className="space-y-3">
+          <ul className="space-y-3 mt-3">
             {weaknesses.slice(0, 3).map((w, idx) => (
               <li
                 key={idx}
-                className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-300 bg-surface-card/60 rounded-xl p-3 border border-surface-border/60"
+                className="flex items-start gap-2.5 text-xs sm:text-sm text-text-secondary bg-surface-elevated/70 rounded-lg p-3 border border-border/80"
               >
-                <span className="text-rose-400 font-mono font-bold text-xs mt-0.5">
-                  #{idx + 1}
+                <span className="text-score-danger font-bold font-mono text-sm leading-none mt-0.5">
+                  ⚠
                 </span>
-                <span>{w}</span>
+                <span className="leading-snug text-text-primary">{w}</span>
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       </div>
 
-      {/* Role Gap Analysis & 5 Actionable Quick Fixes */}
+      {/* Role Gap Analysis & Exactly 5 Actionable Quick Fixes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Career Gaps */}
-        <div className="bg-surface rounded-2xl p-6 border border-surface-border shadow-xl">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-md bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-              <Compass className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              Target Role Gaps
-            </h4>
-          </div>
+        {/* Target Role Gaps */}
+        <Card variant="default" padding="lg">
+          <SectionHeader
+            icon={<Compass className="w-4 h-4 text-accent-light" />}
+            title="Target Role Gaps"
+            subtitle="Discrepancies against industry market expectations"
+            badge={
+              <Badge variant="outline" size="sm">
+                Skill Mapping
+              </Badge>
+            }
+          />
 
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 mt-3">
             {careerGaps.map((gap, idx) => (
               <div
                 key={idx}
-                className="text-xs sm:text-sm text-gray-300 bg-surface-card/40 rounded-xl p-3 border border-surface-border flex items-start gap-2"
+                className="text-xs sm:text-sm text-text-secondary bg-surface-elevated/50 rounded-lg p-3 border border-border/70 flex items-start gap-2.5"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
-                <span>{gap}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-light mt-2 flex-shrink-0" />
+                <span className="leading-relaxed">{gap}</span>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
-        {/* Exactly 5 Quick Fixes */}
-        <div className="bg-surface rounded-2xl p-6 border border-surface-border shadow-xl">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-md bg-amber-500/10 text-amber-400 flex items-center justify-center">
-              <Zap className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              High-Impact Quick Fixes (5)
-            </h4>
-          </div>
+        {/* Exactly 5 Quick Recommendations (→) */}
+        <Card variant="default" padding="lg">
+          <SectionHeader
+            icon={<ArrowRight className="w-4 h-4 text-score-warning" />}
+            title="Recommendations"
+            subtitle="Immediate tactical improvements"
+            badge={
+              <Badge variant="warning" size="sm">
+                5 Fixes
+              </Badge>
+            }
+          />
 
-          <div className="space-y-2">
+          <div className="space-y-2 mt-3">
             {quickFixes.slice(0, 5).map((fix, idx) => (
               <div
                 key={idx}
-                className="text-xs sm:text-sm text-gray-200 bg-surface-card/40 rounded-xl p-2.5 border border-surface-border flex items-start gap-2.5"
+                className="text-xs sm:text-sm text-text-primary bg-surface-elevated/50 rounded-lg p-2.5 border border-border/70 flex items-start gap-2.5"
               >
-                <span className="text-xs font-mono font-bold text-amber-400 w-4 flex-shrink-0">
+                <span className="text-xs font-mono font-bold text-score-warning w-4 flex-shrink-0">
                   {idx + 1}.
                 </span>
-                <span>{fix}</span>
+                <span className="leading-snug">{fix}</span>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

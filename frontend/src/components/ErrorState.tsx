@@ -1,5 +1,16 @@
 import React from 'react';
-import { AlertCircle, Clock, FolderGit2, RefreshCw, SearchX, ShieldAlert } from 'lucide-react';
+import {
+  AlertTriangle,
+  Clock,
+  FolderX,
+  RefreshCw,
+  SearchX,
+  ShieldAlert,
+  WifiOff,
+} from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
 import type { ApiErrorCode } from '../types';
 
 interface ErrorStateProps {
@@ -13,6 +24,7 @@ interface ErrorStateProps {
 export const ErrorState: React.FC<ErrorStateProps> = ({
   code,
   message,
+  details,
   onRetry,
   onBack,
 }) => {
@@ -21,50 +33,78 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       case 'USER_NOT_FOUND':
         return {
           icon: SearchX,
-          title: 'GitHub User Not Found',
-          badge: '404 NOT FOUND',
-          badgeColor: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-          recommendation: 'Check the spelling of the handle or try searching on github.com directly.',
+          title: "Looks like this GitHub profile doesn't exist.",
+          badgeVariant: 'danger' as const,
+          badgeLabel: '404 USER NOT FOUND',
+          advice: 'Double check the spelling or search for the user directly on github.com.',
+          primaryActionText: 'Try Another Username',
+          primaryAction: onBack,
+          secondaryActionText: 'Retry Search',
+          secondaryAction: onRetry,
         };
       case 'INVALID_USERNAME':
         return {
           icon: ShieldAlert,
-          title: 'Invalid GitHub Username',
-          badge: '400 BAD REQUEST',
-          badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-          recommendation: 'GitHub usernames must be 1–39 characters, alphanumeric with single hyphens, not starting or ending with a hyphen.',
+          title: 'Invalid GitHub Username Format',
+          badgeVariant: 'warning' as const,
+          badgeLabel: '400 INVALID HANDLE',
+          advice: 'GitHub usernames must be 1–39 characters, alphanumeric with single hyphens, without leading or trailing hyphens.',
+          primaryActionText: 'Fix Username',
+          primaryAction: onBack,
+          secondaryActionText: null,
+          secondaryAction: null,
         };
       case 'EMPTY_PROFILE':
         return {
-          icon: FolderGit2,
+          icon: FolderX,
           title: 'No Public Repositories Found',
-          badge: 'EMPTY PROFILE',
-          badgeColor: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-          recommendation: 'This account has 0 public repositories. GitRoast requires at least one public repository to evaluate code quality.',
+          badgeVariant: 'accent' as const,
+          badgeLabel: 'EMPTY PORTFOLIO',
+          advice: 'GitRoast evaluates code quality, commit consistency, and documentation across public repositories. This account has 0 public repos to analyze.',
+          primaryActionText: 'Try Another Profile',
+          primaryAction: onBack,
+          secondaryActionText: null,
+          secondaryAction: null,
         };
       case 'RATE_LIMITED':
         return {
           icon: Clock,
-          title: 'GitHub API Rate Limit Reached',
-          badge: '429 RATE LIMITED',
-          badgeColor: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-          recommendation: 'Public unauthenticated GitHub requests are capped at 60/hr. Provide a GITHUB_TOKEN in backend .env for 5,000 req/hr.',
+          title: "We've hit GitHub's request limit. Please try again shortly.",
+          badgeVariant: 'warning' as const,
+          badgeLabel: '429 RATE LIMIT',
+          advice: details?.reset_at
+            ? `GitHub's public rate limit for this IP resets at ${new Date(
+                Number(details.reset_at) * 1000
+              ).toLocaleTimeString()}. Provide a GITHUB_TOKEN in backend .env to unlock 5,000 req/hr.`
+            : 'Public unauthenticated requests are limited by GitHub. You can wait a moment or configure a free GITHUB_TOKEN.',
+          primaryActionText: 'Try Again',
+          primaryAction: onRetry,
+          secondaryActionText: 'Back to Search',
+          secondaryAction: onBack,
         };
       case 'UPSTREAM_TIMEOUT':
         return {
-          icon: Clock,
-          title: 'Upstream Network Timeout',
-          badge: '504 TIMEOUT',
-          badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-          recommendation: 'GitHub API or the LLM service took too long to respond. Please check your internet connection and retry.',
+          icon: WifiOff,
+          title: 'We couldn’t reach GitHub.',
+          badgeVariant: 'danger' as const,
+          badgeLabel: '504 TIMEOUT',
+          advice: 'The connection to GitHub or upstream services timed out. Please check your internet connection and retry.',
+          primaryActionText: 'Try Again',
+          primaryAction: onRetry,
+          secondaryActionText: 'Back to Search',
+          secondaryAction: onBack,
         };
       default:
         return {
-          icon: AlertCircle,
-          title: 'Analysis Error',
-          badge: 'SERVER ERROR',
-          badgeColor: 'bg-red-500/10 text-red-400 border-red-500/30',
-          recommendation: 'An unexpected issue occurred while analyzing this account. Please try again or inspect server logs.',
+          icon: AlertTriangle,
+          title: 'Analysis Service Encountered an Issue',
+          badgeVariant: 'danger' as const,
+          badgeLabel: 'SERVICE ERROR',
+          advice: 'An unexpected issue occurred while analyzing this account. Please try again or test with another username.',
+          primaryActionText: 'Try Again',
+          primaryAction: onRetry,
+          secondaryActionText: 'Back to Search',
+          secondaryAction: onBack,
         };
     }
   };
@@ -73,37 +113,61 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   const Icon = meta.icon;
 
   return (
-    <div className="w-full max-w-xl mx-auto py-16 px-6 text-center">
-      <div className="bg-surface rounded-2xl p-8 border border-surface-border shadow-2xl">
-        <div className="w-16 h-16 rounded-2xl bg-surface-card border border-surface-border flex items-center justify-center mx-auto mb-6 text-roast shadow-inner">
-          <Icon className="w-8 h-8" />
+    <div className="w-full max-w-xl mx-auto py-16 px-4 sm:px-6 text-center" role="alert">
+      <Card variant="elevated" padding="lg" className="border-border shadow-2xl bg-surface/95">
+        {/* Icon Frame */}
+        <div className="w-14 h-14 rounded-xl bg-surface border border-border flex items-center justify-center mx-auto mb-5 text-roast shadow-subtle">
+          <Icon className="w-7 h-7" />
         </div>
 
-        <div className={`inline-block px-3 py-1 rounded-full text-xs font-mono font-semibold border mb-3 tracking-wider ${meta.badgeColor}`}>
-          {meta.badge}
+        {/* Status Badge */}
+        <div className="mb-3">
+          <Badge variant={meta.badgeVariant} size="sm">
+            {meta.badgeLabel}
+          </Badge>
         </div>
 
-        <h2 className="text-xl font-bold text-white mb-2">{meta.title}</h2>
-        <p className="text-sm text-gray-300 mb-4 bg-surface-card/60 rounded-xl p-3 border border-surface-border font-mono text-xs">
+        {/* Title */}
+        <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-3 font-sans">
+          {meta.title}
+        </h2>
+
+        {/* Friendly Clean Message */}
+        <div className="bg-bg/90 border border-border/80 rounded-lg p-3.5 mb-4 text-xs font-mono text-text-secondary leading-relaxed">
           {message}
-        </p>
-        <p className="text-xs text-gray-400 mb-8">{meta.recommendation}</p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button
-            onClick={onRetry}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-          >
-            <RefreshCw className="w-4 h-4" /> Try Again
-          </button>
-          <button
-            onClick={onBack}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-surface-card hover:bg-surface-border border border-surface-border text-gray-300 text-sm font-medium transition-all"
-          >
-            Back to Search
-          </button>
         </div>
-      </div>
+
+        {/* Helpful Guidance */}
+        <p className="text-xs text-text-muted mb-8 leading-relaxed max-w-md mx-auto">
+          {meta.advice}
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={meta.primaryAction}
+            leftIcon={<RefreshCw className="w-4 h-4" />}
+            className="w-full sm:w-auto px-6"
+          >
+            {meta.primaryActionText}
+          </Button>
+
+          {meta.secondaryAction && meta.secondaryActionText && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={meta.secondaryAction}
+              className="w-full sm:w-auto px-5"
+            >
+              {meta.secondaryActionText}
+            </Button>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };

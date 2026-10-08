@@ -28,3 +28,6 @@ class TTLCache:
 
 # Global singleton cache instance for GitHub profile responses
 github_cache = TTLCache(default_ttl=600)
+
+# Global singleton cache instance for AI roast results (keyed on username + role + brutality + variant)
+ai_cache = TTLCache(default_ttl=600)

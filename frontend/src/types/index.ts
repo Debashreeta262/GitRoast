@@ -74,6 +74,17 @@ export interface AiAnalysisResult {
   quick_fixes: string[];
   rescue_plan: RescuePlanItem[];
   role_fit_summary: string;
+  grounding_repos?: string[];
+  comic_device?: string | null;
+}
+
+export interface RegenerateRoastResponse {
+  roast: string;
+  roast_explanation: string;
+  grounding_repos: string[];
+  comic_device: string | null;
+  variant: number;
+  ai_available: boolean;
 }
 
 export interface AnalyzeMeta {

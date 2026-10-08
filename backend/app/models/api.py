@@ -18,6 +18,21 @@ class AnalyzeRequest(BaseModel):
     username: str
     role: TargetRole = TargetRole.SOFTWARE_ENGINEER
     brutality: BrutalityLevel = BrutalityLevel.HONEST
+    variant: int = 0
+
+class RegenerateRoastRequest(BaseModel):
+    username: str
+    role: TargetRole = TargetRole.SOFTWARE_ENGINEER
+    brutality: BrutalityLevel = BrutalityLevel.HONEST
+    variant: int = 1
+
+class RegenerateRoastResponse(BaseModel):
+    roast: str
+    roast_explanation: str
+    grounding_repos: List[str] = Field(default_factory=list)
+    comic_device: Optional[str] = None
+    variant: int = 1
+    ai_available: bool = True
 
 class ApiErrorDetail(BaseModel):
     code: str

@@ -81,3 +81,41 @@ def test_analyze_valid_mocked_flow():
         assert data["ai"]["roast"] == "You have more markdown badges than tests."
         assert "meta" in data
         assert data["meta"]["repos_total"] >= 1
+
+
+def test_regenerate_roast_flow():
+    mock_ai = AiAnalysisResult(
+        recruiter_verdict="Skilled developer.",
+        roast="Testing regenerate roast output.",
+        roast_explanation="Fresh diagnostic insight.",
+        strengths=["A", "B", "C"],
+        weaknesses=["D", "E", "F"],
+        career_gaps=["G"],
+        quick_fixes=["1", "2", "3", "4", "5"],
+        rescue_plan=[],
+        role_fit_summary="Alignment confirmed.",
+        grounding_repos=["Hello-World"],
+        comic_device="mock awards ceremony",
+    )
+    mock_profile = GitHubUserProfile(username="octocat", public_repos=1)
+    mock_user_data = GitHubUserData(
+        profile=mock_profile, repos=[GitHubRepoRaw(name="Hello-World", stargazers_count=10, has_readme=True)],
+        events=[], total_repos_count=1, analyzed_repos_count=1
+    )
+
+    with patch("app.routes.analyze.github_service.fetch_user_data", new_callable=AsyncMock, return_value=mock_user_data), \
+         patch("app.routes.analyze.ai_service.generate_roast_and_analysis", return_value=(mock_ai, True, None)):
+        payload = {
+            "username": "octocat",
+            "role": "software_engineer",
+            "brutality": "brutal",
+            "variant": 2,
+        }
+        response = client.post("/api/regenerate-roast", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["roast"] == "Testing regenerate roast output."
+        assert data["variant"] == 2
+        assert data["comic_device"] == "mock awards ceremony"
+        assert "Hello-World" in data["grounding_repos"]
+

@@ -4,7 +4,7 @@ from unittest.mock import patch
 from app.models.ai import AiAnalysisResult
 from app.models.api import BrutalityLevel, TargetRole
 from app.models.github import GitHubUserData, GitHubUserProfile, GitHubRepoRaw
-from app.models.scoring import ScoringResult, ScoreBreakdown, CategoryScores
+from app.models.scoring import ScoringResult, ScoreBreakdown, CategoryScores, RepoAnalysis
 from app.services.ai_service import clean_llm_json, ai_service
 
 def test_clean_llm_json():
@@ -46,19 +46,20 @@ def test_ai_schema_validation():
 @pytest.mark.asyncio
 async def test_simulated_malformed_then_repaired_response():
     profile = GitHubUserProfile(username="coder1", public_repos=1)
-    user_data = GitHubUserData(profile=profile, repos=[], events=[], total_repos_count=1, analyzed_repos_count=1)
+    raw_repo = GitHubRepoRaw(name="scratchpad-app", stargazers_count=15, has_readme=True)
+    user_data = GitHubUserData(profile=profile, repos=[raw_repo], events=[], total_repos_count=1, analyzed_repos_count=1)
     cats = CategoryScores(
         technical_strength=50, project_quality=50, activity_consistency=50,
         documentation=50, recruiter_appeal=50, profile_presentation=50
     )
     scoring_res = ScoringResult(
         scores=ScoreBreakdown(overall=50, categories=cats, weights={}),
-        repos=[],
+        repos=[RepoAnalysis(name="scratchpad-app", stars=15, quality_score=60, has_readme=True)],
     )
 
     valid_json_response = json.dumps({
         "recruiter_verdict": "Promising developer.",
-        "roast": "You push code like it's a scratchpad.",
+        "roast": "Repository scratchpad-app has 15 stars but lacks documentation.",
         "roast_explanation": "Lack of versioning makes it hard to gauge stability.",
         "strengths": ["Consistent pushes", "Python proficiency", "Clean repos"],
         "weaknesses": ["No documentation", "No tests", "No licenses"],
@@ -79,7 +80,7 @@ async def test_simulated_malformed_then_repaired_response():
         )
         assert ai_available is True
         assert result is not None
-        assert result.roast == "You push code like it's a scratchpad."
+        assert result.roast == "Repository scratchpad-app has 15 stars but lacks documentation."
 
 @pytest.mark.asyncio
 async def test_ai_fallback_grounded_generation():
@@ -105,3 +106,74 @@ async def test_ai_fallback_grounded_generation():
         assert len(result.weaknesses) == 3
         assert len(result.quick_fixes) == 5
         assert len(result.rescue_plan) == 4
+
+
+def test_render_prompts_injects_tone_and_device_and_banned():
+    user_data = GitHubUserData(
+        profile=GitHubUserProfile(username="alice", public_repos=2),
+        repos=[GitHubRepoRaw(name="demo-app", stargazers_count=10, has_readme=True)],
+        events=[],
+        total_repos_count=1,
+        analyzed_repos_count=1,
+    )
+    cats = CategoryScores(
+        technical_strength=60, project_quality=60, activity_consistency=60,
+        documentation=60, recruiter_appeal=60, profile_presentation=60,
+    )
+    scoring_res = ScoringResult(
+        scores=ScoreBreakdown(overall=60, categories=cats, weights={}),
+        repos=[],
+    )
+    candidate_summary = ai_service.build_candidate_summary(user_data, scoring_res)
+    from app.services.evidence_pack import evidence_pack_service
+    facts = evidence_pack_service.extract_facts(user_data, scoring_res)
+    selection = evidence_pack_service.select_angles_and_device(facts, "alice", "brutal", variant=0)
+
+    sys_prompt, usr_prompt = ai_service.render_prompts(
+        candidate_summary, TargetRole.SOFTWARE_ENGINEER, BrutalityLevel.BRUTAL, selection
+    )
+
+    assert "Software Engineer" in sys_prompt
+    assert "Comedic Roastmaster" in sys_prompt
+    assert selection.comic_device in usr_prompt
+    assert "BANNED PHRASES" in sys_prompt
+    assert "well, well" in sys_prompt.lower()
+    assert "SELECTED EVIDENCE ANGLES" in usr_prompt
+
+
+def test_tone_personas_produce_different_fallback_voices():
+    user_data = GitHubUserData(
+        profile=GitHubUserProfile(username="bob", public_repos=2),
+        repos=[GitHubRepoRaw(name="alpha-project", stargazers_count=50, language="Go", has_readme=True)],
+        events=[],
+        total_repos_count=1,
+        analyzed_repos_count=1,
+    )
+    cats = CategoryScores(
+        technical_strength=70, project_quality=70, activity_consistency=70,
+        documentation=70, recruiter_appeal=70, profile_presentation=70,
+    )
+    scoring_res = ScoringResult(
+        scores=ScoreBreakdown(overall=70, categories=cats, weights={}),
+        repos=[],
+    )
+    from app.services.evidence_pack import evidence_pack_service
+    facts = evidence_pack_service.extract_facts(user_data, scoring_res)
+    sel = evidence_pack_service.select_angles_and_device(facts, "bob", "professional", variant=0)
+
+    res_prof = ai_service.generate_grounded_fallback(
+        user_data, scoring_res, TargetRole.SOFTWARE_ENGINEER, BrutalityLevel.PROFESSIONAL, sel
+    )
+    res_honest = ai_service.generate_grounded_fallback(
+        user_data, scoring_res, TargetRole.SOFTWARE_ENGINEER, BrutalityLevel.HONEST, sel
+    )
+    res_brutal = ai_service.generate_grounded_fallback(
+        user_data, scoring_res, TargetRole.SOFTWARE_ENGINEER, BrutalityLevel.BRUTAL, sel
+    )
+
+    assert res_prof.roast != res_honest.roast
+    assert res_honest.roast != res_brutal.roast
+    # Professional voice is diplomatic
+    assert "candidate" in res_prof.roast.lower() or "competent" in res_prof.roast.lower() or "portfolio" in res_prof.roast.lower()
+    # Honest voice is direct peer
+    assert "genuine" in res_honest.roast.lower() or "recruiters" in res_honest.roast.lower() or "direct" in res_honest.roast.lower()

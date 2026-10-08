@@ -15,6 +15,8 @@ class AiAnalysisResult(BaseModel):
     quick_fixes: List[str] = Field(description="Exactly 5 actionable recommendations")
     rescue_plan: List[RescuePlanItem] = Field(description="Prioritized rescue plan across 4 horizons")
     role_fit_summary: str = Field(description="Summary of role alignment")
+    grounding_repos: List[str] = Field(default_factory=list, description="Specific repositories cited in the roast")
+    comic_device: Optional[str] = Field(default=None, description="Comic device used to structure the roast")
 
     @field_validator("strengths")
     @classmethod

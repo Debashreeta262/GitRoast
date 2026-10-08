@@ -1,6 +1,12 @@
-import type { AnalyzeResponse, ApiErrorResponse, BrutalityLevel, TargetRole } from '../types';
+import type {
+  AnalyzeResponse,
+  ApiErrorResponse,
+  BrutalityLevel,
+  RegenerateRoastResponse,
+  TargetRole,
+} from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export class ApiError extends Error {
   code: string;
@@ -91,3 +97,54 @@ export async function analyzeProfile(
     );
   }
 }
+
+export async function regenerateRoast(
+  username: string,
+  role: TargetRole,
+  brutality: BrutalityLevel,
+  variant: number
+): Promise<RegenerateRoastResponse> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/regenerate-roast`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username.trim(),
+        role,
+        brutality,
+        variant,
+      }),
+    });
+
+    if (!res.ok) {
+      let errorData: ApiErrorResponse | null = null;
+      try {
+        errorData = (await res.json()) as ApiErrorResponse;
+      } catch {
+        // Non-JSON response
+      }
+
+      if (errorData?.error) {
+        throw new ApiError(
+          errorData.error.code,
+          errorData.error.message,
+          errorData.error.details
+        );
+      }
+      throw new ApiError('INTERNAL', `Server responded with status ${res.status}`);
+    }
+
+    return (await res.json()) as RegenerateRoastResponse;
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError(
+      'INTERNAL',
+      err instanceof Error ? err.message : 'Failed to regenerate roast.'
+    );
+  }
+}
+
