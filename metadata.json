@@ -1,0 +1,7 @@
+{
+  "name": "GitRoast • AI-Powered GitHub Career Coach",
+  "description": "GitRoast - AI-powered GitHub career coach and deterministic code quality diagnostic engine.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
